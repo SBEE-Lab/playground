@@ -4,7 +4,7 @@
 
 ## 학습 목표
 
-**재현 가능성(Reproducibility)** 과 **결정론적 빌드(Deterministic Builds)**를 통해 모든 개발자가 동일한 환경에서 작업할 수 있도록 합니다.
+**재현 가능성(Reproducibility)** 과 **결정론적 빌드(Deterministic Builds)** 를 통해 모든 개발자가 동일한 환경에서 작업할 수 있도록 합니다.
 
 ## Chapter 1: Introduction to Nix
 
