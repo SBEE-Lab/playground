@@ -4,13 +4,14 @@
 
 ### 선언적 시스템 관리
 
-**NixOS**는 전체 Linux 시스템을 Nix 언어로 선언하여 관리하는 배포판입니다.
+**NixOS**는 전체 Linux 시스템을 Nix 언어로 선언적으로 관리하는 배포판입니다.
 
 ```nix
-# configuration.nix - 시스템 전체를 코드로 정의
+# 목적: 시스템 전체를 코드로 정의
+# 핵심 개념: 선언적 구성, 불변 시스템
 {
   # 사용자 정의
-  users.users.researcher = {
+  users.users.developer = {
     isNormalUser = true;
     extraGroups = [ "wheel" "docker" ];
   };
@@ -19,65 +20,58 @@
   services.openssh.enable = true;
   services.docker.enable = true;
 
-  # 패키지 설치
+  # 시스템 패키지
   environment.systemPackages = with pkgs; [
-    python3 git vim curl
+    git vim curl python3
   ];
 }
 ```
 
-**장점**:
+**핵심 특징**:
 
 - 시스템 상태를 코드로 버전 관리
-- 원자적 업데이트와 안전한 롤백
-- 완전한 재현성 보장
+- 원자적 업데이트와 롤백
+- 완전한 재현성
 
 ## B.2 설치 과정
 
 ### 최소 요구사항
 
-- RAM: 2GB 이상 (권장 4GB)
+- RAM: 4GB 이상
 - 디스크: 20GB 이상
 - 아키텍처: x86_64, aarch64
 
-### 기본 설치
+### 기본 설치 절차
 
 ```bash
-# NixOS ISO 다운로드 및 부팅 후
-sudo su
-
-# 디스크 파티션 (예: /dev/sda)
+# NixOS ISO 부팅 후 파티션 생성
 parted /dev/sda -- mklabel gpt
 parted /dev/sda -- mkpart primary 512MiB -8GiB
 parted /dev/sda -- mkpart primary linux-swap -8GiB 100%
 parted /dev/sda -- mkpart ESP fat32 1MiB 512MiB
-parted /dev/sda -- set 3 esp on
 
 # 파일시스템 생성
 mkfs.ext4 -L nixos /dev/sda1
 mkswap -L swap /dev/sda2
 mkfs.fat -F 32 -n boot /dev/sda3
 
-# 마운트
+# 마운트 및 설치
 mount /dev/disk/by-label/nixos /mnt
 mkdir -p /mnt/boot
 mount /dev/disk/by-label/boot /mnt/boot
 swapon /dev/sda2
 
-# 설정 생성
 nixos-generate-config --root /mnt
-
-# 설치
 nixos-install
-reboot
 ```
 
-## B.3 연구 서버 설정 템플릿
+## B.3 시스템 구성
 
-### 기본 서버 구성
+### 기본 서버 설정
 
 ```nix
-# /etc/nixos/configuration.nix
+# 목적: 개발 서버 기본 구성
+# 핵심 개념: 서비스 정의, 사용자 관리
 { config, pkgs, ... }:
 
 {
@@ -89,30 +83,11 @@ reboot
 
   # 네트워크
   networking = {
-    hostName = "research-server";
+    hostName = "dev-server";
     networkmanager.enable = true;
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 80 443 8888 ];  # SSH, HTTP, HTTPS, Jupyter
-    };
-  };
-
-  # 사용자 계정
-  users.users = {
-    researcher = {
-      isNormalUser = true;
-      extraGroups = [ "wheel" "docker" "networkmanager" ];
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... researcher@laptop"
-      ];
-    };
-
-    admin = {
-      isNormalUser = true;
-      extraGroups = [ "wheel" ];
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... admin@workstation"
-      ];
+      allowedTCPPorts = [ 22 80 443 ];
     };
   };
 
@@ -125,169 +100,160 @@ reboot
     };
   };
 
-  # 개발 도구
+  # 시스템 패키지
   environment.systemPackages = with pkgs; [
-    # 기본 도구
-    git vim curl wget tree htop
-
-    # Python 환경
-    python3 python3Packages.pip
-
-    # 서버 관리
-    docker docker-compose
-    nginx
+    git vim curl wget htop
+    python3 nodejs docker
   ];
 
-  # Docker
+  # 가상화
   virtualisation.docker.enable = true;
-
-  # Jupyter 서비스 (옵션)
-  services.jupyter = {
-    enable = true;
-    ip = "0.0.0.0";
-    port = 8888;
-    password = "'sha256:...'";  # jupyter notebook password 명령으로 생성
-  };
 
   system.stateVersion = "23.11";
 }
 ```
 
-### GPU 서버 설정
+### 개발 환경 서버
 
 ```nix
-# CUDA 지원 서버
-{ config, pkgs, ... }:
-
+# 목적: 개발팀용 서버 구성
+# 핵심 개념: 다중 사용자, 개발 도구
 {
-  # 기본 설정 상속
-  imports = [ ./configuration.nix ];
+  imports = [ ./base-config.nix ];
 
-  # NVIDIA 드라이버
-  services.xserver.videoDrivers = [ "nvidia" ];
-  hardware.opengl = {
-    enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
+  # 사용자 계정
+  users.users = {
+    developer1 = {
+      isNormalUser = true;
+      extraGroups = [ "wheel" "docker" ];
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... developer1@laptop"
+      ];
+    };
+
+    developer2 = {
+      isNormalUser = true;
+      extraGroups = [ "wheel" "docker" ];
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... developer2@laptop"
+      ];
+    };
   };
 
-  # CUDA 패키지
+  # 개발 도구
   environment.systemPackages = with pkgs; [
-    cudatoolkit
-    cudnn
-    python3Packages.tensorflow-gpu
-    python3Packages.pytorch
+    # 언어별 런타임
+    python3 nodejs-18_x go rustc
+
+    # 데이터베이스 클라이언트
+    postgresql mysql80
+
+    # 빌드 도구
+    gnumake cmake gcc
   ];
 
-  # Docker NVIDIA 지원
-  virtualisation.docker = {
+  # 데이터베이스 서비스
+  services.postgresql = {
     enable = true;
-    enableNvidia = true;
+    ensureDatabases = [ "development" ];
   };
 }
 ```
 
-## B.4 패키지 관리와 서비스
+## B.4 서비스 관리
 
-### 시스템 업데이트
+### 웹 서버 구성
+
+```nix
+# 목적: Nginx 웹 서버 설정
+# 핵심 개념: 리버스 프록시, SSL
+{
+  services.nginx = {
+    enable = true;
+    virtualHosts."api.example.com" = {
+      forceSSL = true;
+      enableACME = true;
+      locations."/" = {
+        proxyPass = "http://localhost:3000";
+      };
+    };
+  };
+
+  # 자동 SSL 인증서
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "admin@example.com";
+  };
+}
+```
+
+### 백업 서비스
+
+```nix
+# 목적: 자동 백업 설정
+# 핵심 개념: 스케줄링, 데이터 보호
+{
+  services.restic.backups.daily = {
+    repository = "/backup/restic";
+    paths = [ "/home" "/etc/nixos" "/var/lib" ];
+    passwordFile = "/etc/nixos/backup-password";
+    timerConfig = {
+      OnCalendar = "daily";
+      Persistent = true;
+    };
+  };
+}
+```
+
+## B.5 시스템 관리
+
+### 업데이트와 롤백
 
 ```bash
-# 채널 업데이트
-sudo nix-channel --update
-
-# 시스템 재빌드
+# 시스템 업데이트
 sudo nixos-rebuild switch
 
-# 특정 세대로 롤백
+# 설정 테스트 (재부팅 없이)
+sudo nixos-rebuild test
+
+# 이전 설정으로 롤백
 sudo nixos-rebuild switch --rollback
 
 # 세대 목록 확인
 sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 ```
 
-### 서비스 관리
+### 원격 관리
 
-```nix
-# 웹 서버 추가
-services.nginx = {
-  enable = true;
-  virtualHosts."research.lab.com" = {
-    forceSSL = true;
-    enableACME = true;
-    locations."/" = {
-      proxyPass = "http://localhost:8888";  # Jupyter로 프록시
-    };
-  };
-};
+```bash
+# 원격 빌드 및 배포
+nixos-rebuild switch --target-host user@server --use-remote-sudo
 
-# 자동 SSL 인증서
-security.acme = {
-  acceptTerms = true;
-  defaults.email = "admin@lab.com";
-};
-
-# 백업 서비스
-services.restic.backups.daily = {
-  repository = "/backup";
-  paths = [ "/home" "/etc/nixos" ];
-  timerConfig = {
-    OnCalendar = "daily";
-    Persistent = true;
-  };
-};
+# 설정 파일 동기화
+rsync -av ./nixos-config/ server:/etc/nixos/
 ```
 
-### 사용자별 환경
+## B.6 실무 사례
+
+### CI/CD 서버
 
 ```nix
-# 연구자별 Python 환경
-environment.systemPackages = with pkgs; [
-  (python3.withPackages (ps: with ps; [
-    biopython pandas matplotlib numpy
-    scikit-learn tensorflow
-    jupyter notebook
-  ]))
-];
-
-# 개발 도구
-programs = {
-  git.enable = true;
-  vim.defaultEditor = true;
-  zsh.enable = true;
-};
-```
-
-## B.5 실제 운용 시나리오
-
-### 연구 데이터 서버
-
-```nix
-# 데이터 보관 및 분석 서버
+# 목적: 지속적 통합 서버 구성
+# 핵심 개념: 자동화, 컨테이너 지원
 {
-  # 대용량 스토리지 마운트
-  fileSystems."/data" = {
-    device = "/dev/disk/by-uuid/...";
-    fsType = "ext4";
-    options = [ "defaults" "noatime" ];
-  };
-
-  # 자동 백업
-  services.restic.backups.research-data = {
-    repository = "s3:backup-bucket/research";
-    paths = [ "/data/experiments" "/data/results" ];
-    environmentFile = "/etc/nixos/backup-credentials";
-    timerConfig.OnCalendar = "weekly";
-  };
-
-  # 데이터 공유 (Samba)
-  services.samba = {
+  # GitLab Runner
+  services.gitlab-runner = {
     enable = true;
-    shares.research = {
-      path = "/data";
-      browseable = "yes";
-      writable = "yes";
-      "valid users" = "researcher";
+    services.default = {
+      registrationConfigFile = "/etc/nixos/gitlab-runner-config";
+      executor = "docker";
     };
+  };
+
+  # Docker 레지스트리
+  services.dockerRegistry = {
+    enable = true;
+    port = 5000;
   };
 
   # 모니터링
@@ -298,65 +264,75 @@ programs = {
 }
 ```
 
-### 업데이트 및 롤백
+### 데이터베이스 서버
 
-```bash
-# 안전한 업데이트 절차
-# 1. 현재 세대 확인
-sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
+```nix
+# 목적: 고가용성 데이터베이스 구성
+# 핵심 개념: 데이터 지속성, 백업
+{
+  services.postgresql = {
+    enable = true;
+    package = pkgs.postgresql_15;
+    dataDir = "/var/lib/postgresql/15";
 
-# 2. 테스트 빌드
-sudo nixos-rebuild test
+    settings = {
+      max_connections = 200;
+      shared_buffers = "256MB";
+      effective_cache_size = "1GB";
+    };
 
-# 3. 정상 작동 확인 후 적용
-sudo nixos-rebuild switch
+    ensureDatabases = [ "production" "staging" ];
+    ensureUsers = [
+      {
+        name = "app";
+        ensurePermissions = {
+          "DATABASE production" = "ALL PRIVILEGES";
+        };
+      }
+    ];
+  };
 
-# 4. 문제 발생 시 롤백
-sudo nixos-rebuild switch --rollback
+  # 자동 백업
+  services.postgresqlBackup = {
+    enable = true;
+    databases = [ "production" ];
+    startAt = "02:00";
+  };
+}
 ```
 
-### 원격 관리
+## B.7 특징과 제한사항
 
-```bash
-# 원격 배포 (deploy-rs 사용)
-nix run github:serokell/deploy-rs -- .#research-server
+### 장점
 
-# 원격 빌드
-nixos-rebuild switch --target-host researcher@server --use-remote-sudo
-```
+| 특성       | 설명                                    |
+| ---------- | --------------------------------------- |
+| **재현성** | 설정 파일로 완전히 동일한 시스템 재구성 |
+| **롤백**   | 이전 시스템 상태로 즉시 복원            |
+| **원자성** | 업데이트 성공 또는 완전 실패            |
+| **테스트** | 프로덕션 적용 전 안전한 테스트          |
 
-## B.6 요약 및 정리
+### 제한사항
 
-**NixOS 활용 시점**:
-
-- 연구실 서버 관리 필요
-- 시스템 설정의 버전 관리 필요
-- 완전한 재현성이 중요한 환경
-
-**장점**:
-
-- 선언적 시스템 관리
-- 안전한 업데이트/롤백
-- 완전한 재현성
-
-**제한사항**:
-
-- 학습 곡선 가파름
+- 전통적 Linux 관리 방식과 상이
+- 학습 곡선 존재
 - 일부 소프트웨어 호환성 이슈
-- 전통적 Linux 관리 방식과 다름
+- FHS(Filesystem Hierarchy Standard) 비준수
 
-**Advanced**:
+### 적용 시점
 
-- Enterprise/Production 환경에서는 디스크 파티셔닝, 리소스 할당과 같은 프로비저닝 과정까지 모두 Nix로 선언 가능.
-- 프로비저닝의 경우, HashiCorp Terraform 을 nixos-anywhere 와 함께 활용하여 AWS/Azure/Google Cloud 를 비롯한 여러 클라우드 서비스에 원격 설치 및 배포도 가능함
+**권장**:
 
-**다음 단계**: 개인 환경 관리는 [Appendix D (Home Manager)](./ch1-D-introduction-to-home-manager.md) 참조
+- 서버 인프라 관리
+- 개발팀 표준화
+- 시스템 설정 버전 관리
+
+**비권장**:
+
+- 데스크톱 일반 사용
+- Linux 초보자
+- 레거시 시스템 의존성
 
 ---
 
-## **읽을거리**
-
-1. [Learn Nix](https://nixos.org/learn/)
-2. [nix.dev](https://nix.dev/)
-3. [nixos-anywhere](https://github.com/nix-community/nixos-anywhere)
-4. [deploy-rs](https://github.com/serokell/deploy-rs)
+**요약**: NixOS는 전체 시스템을 선언적으로 관리하는 Linux 배포판입니다. 서버 환경에서 재현성과 안정성을 보장하지만, 전통적 관리 방식과는 다른 접근법을 요구합니다.

@@ -7,51 +7,42 @@
 **Home Manager**는 사용자 레벨의 환경과 설정을 Nix로 선언적으로 관리하는 도구입니다.
 
 ```nix
-# home.nix - 개인 환경을 코드로 정의
+# 목적: 개인 환경을 코드로 정의
+# 핵심 개념: 사용자 레벨 설정, dotfiles 관리
 {
   # 패키지 설치
   home.packages = with pkgs; [
-    python3 git vim curl
+    git vim curl python3
   ];
 
-  # dotfiles 관리
+  # 프로그램 설정
   programs.git = {
     enable = true;
-    userName = "연구자";
-    userEmail = "researcher@lab.edu";
+    userName = "Developer";
+    userEmail = "dev@example.com";
   };
 
   # 환경 변수
   home.sessionVariables = {
     EDITOR = "vim";
-    PYTHON_PATH = "/home/user/.local/bin";
+    BROWSER = "firefox";
   };
 }
 ```
 
-**활용 시점**:
+**적용 범위**:
 
-- 개인 개발 환경을 체계적으로 관리할 때
-- dotfiles를 버전 관리하고 싶을 때
-- 여러 시스템에서 일관된 환경을 원할 때
+- 개인 패키지 관리
+- dotfiles 버전 관리
+- 프로그램 설정 통합
 
-## D.2 설치 및 설정
+## D.2 설치와 설정
 
-### 독립 설치
-
-```bash
-# Home Manager 채널 추가
-nix-channel --add https://github.com/nix-community/home-manager/archive/release-23.11.tar.gz home-manager
-nix-channel --update
-
-# 설치
-nix-shell '<home-manager>' -A install
-```
-
-### Flake 기반 설치 (권장)
+### Flake 기반 설치
 
 ```nix
-# flake.nix
+# 목적: Home Manager Flake 구성
+# 핵심 개념: 사용자별 구성, 모듈화
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
@@ -62,7 +53,7 @@ nix-shell '<home-manager>' -A install
   };
 
   outputs = { nixpkgs, home-manager, ... }: {
-    homeConfigurations.researcher = home-manager.lib.homeManagerConfiguration {
+    homeConfigurations.developer = home-manager.lib.homeManagerConfiguration {
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
       modules = [ ./home.nix ];
     };
@@ -70,69 +61,50 @@ nix-shell '<home-manager>' -A install
 }
 ```
 
-```bash
-# Flake로 활성화
-home-manager switch --flake .#researcher
-```
-
 ### 기본 설정
 
 ```nix
-# ~/.config/home-manager/home.nix
+# 목적: Home Manager 기본 구성
+# 핵심 개념: 사용자 정보, 상태 버전
 { config, pkgs, ... }:
 
 {
-  home.username = "researcher";
-  home.homeDirectory = "/home/researcher";
+  home.username = "developer";
+  home.homeDirectory = "/home/developer";
   home.stateVersion = "23.11";
 
-  # Home Manager 자체 관리 허용
   programs.home-manager.enable = true;
 }
 ```
 
-## D.3 Python 개발 환경 템플릿
+## D.3 개발 환경 구성
 
-### 연구자용 기본 환경
+### Python 개발 환경
 
 ```nix
+# 목적: Python 개발자용 환경 설정
+# 핵심 개념: 언어별 도구, 개발 워크플로우
 { config, pkgs, ... }:
 
 {
-  home.username = "researcher";
-  home.homeDirectory = "/home/researcher";
-
-  # Python 개발 환경
   home.packages = with pkgs; [
-    # Python 기본
-    python311
-    python311Packages.pip
-    python311Packages.virtualenv
-    python311Packages.pipenv
-
-    # 생물정보학 도구
-    python311Packages.biopython
-    python311Packages.pandas
-    python311Packages.numpy
-    python311Packages.matplotlib
-    python311Packages.seaborn
-    python311Packages.scikit-learn
+    # Python 도구
+    python3
+    python3Packages.pip
+    python3Packages.virtualenv
 
     # 개발 도구
-    python311Packages.ipython
-    python311Packages.jupyter
-    python311Packages.black
-    python311Packages.flake8
-    python311Packages.pytest
+    python3Packages.black
+    python3Packages.flake8
+    python3Packages.pytest
 
-    # 시스템 도구
+    # 에디터와 유틸리티
     git curl wget tree htop
-    jq ripgrep fd
   ];
 
   # Python 환경 변수
   home.sessionVariables = {
-    PYTHONPATH = "$HOME/.local/lib/python3.11/site-packages:$PYTHONPATH";
+    PYTHONPATH = "$HOME/.local/lib/python3.11/site-packages";
     PIP_USER = "true";
   };
 
@@ -140,63 +112,59 @@ home-manager switch --flake .#researcher
   home.shellAliases = {
     py = "python3";
     pip = "pip3";
-    jn = "jupyter notebook";
-    ipy = "ipython";
+    venv = "python3 -m venv";
   };
-
-  programs.home-manager.enable = true;
-  home.stateVersion = "23.11";
 }
 ```
 
-### R 연동 환경
+### 웹 개발 환경
 
 ```nix
+# 목적: 웹 개발자용 환경 설정
+# 핵심 개념: 다중 언어, 빌드 도구
 {
   home.packages = with pkgs; [
-    # R 환경
-    R
-    rPackages.BiocManager
-    rPackages.tidyverse
-    rPackages.ggplot2
-    rPackages.phyloseq
+    # 런타임
+    nodejs yarn
+    python3
 
-    # RStudio 대안 (CLI)
-    rPackages.IRkernel  # Jupyter R 커널
+    # 도구
+    git docker-client
+
+    # 에디터 지원
+    nodePackages.typescript
+    nodePackages.eslint
   ];
 
-  # R 설정
-  home.file.".Rprofile".text = ''
-    options(repos = c(CRAN = "https://cran.rstudio.com/"))
-    if (!require("BiocManager", quietly = TRUE))
-        install.packages("BiocManager")
-  '';
+  # 프로젝트별 설정
+  programs.direnv = {
+    enable = true;
+    enableBashIntegration = true;
+    nix-direnv.enable = true;
+  };
 }
 ```
 
-## D.4 dotfiles 관리
+## D.4 프로그램 설정 관리
 
 ### Git 설정
 
 ```nix
+# 목적: Git 전역 설정 관리
+# 핵심 개념: 버전 관리 설정, 워크플로우
 {
   programs.git = {
     enable = true;
-    userName = "연구실 연구자";
-    userEmail = "researcher@lab.edu";
+    userName = "Developer Name";
+    userEmail = "dev@company.com";
 
     extraConfig = {
       init.defaultBranch = "main";
       push.default = "simple";
       pull.rebase = true;
 
-      # 생물정보학 파일 처리
-      filter.lfs = {
-        clean = "git-lfs clean -- %f";
-        smudge = "git-lfs smudge -- %f";
-        process = "git-lfs filter-process";
-        required = true;
-      };
+      core.editor = "vim";
+      merge.tool = "vimdiff";
     };
 
     aliases = {
@@ -210,11 +178,9 @@ home-manager switch --flake .#researcher
     ignores = [
       "*.pyc"
       "__pycache__/"
-      ".pytest_cache/"
-      ".ipynb_checkpoints/"
-      "*.egg-info/"
       ".venv/"
       ".DS_Store"
+      "node_modules/"
     ];
   };
 }
@@ -223,29 +189,25 @@ home-manager switch --flake .#researcher
 ### 셸 환경
 
 ```nix
+# 목적: 셸 환경 커스터마이징
+# 핵심 개념: 생산성 향상, 자동화
 {
   programs.bash = {
     enable = true;
 
     shellAliases = {
       ll = "ls -la";
-      la = "ls -A";
       grep = "grep --color=auto";
-
-      # 연구 관련
-      lab = "cd ~/research";
-      data = "cd ~/research/data";
-      scripts = "cd ~/research/scripts";
+      ".." = "cd ..";
     };
 
     initExtra = ''
-      # 프롬프트 커스터마이징
+      # 프롬프트 설정
       export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 
-      # Python 가상환경 표시
-      if [ -n "$VIRTUAL_ENV" ]; then
-        export PS1="($(basename $VIRTUAL_ENV)) $PS1"
-      fi
+      # 히스토리 설정
+      export HISTSIZE=10000
+      export HISTFILESIZE=20000
     '';
   };
 
@@ -258,39 +220,32 @@ home-manager switch --flake .#researcher
     oh-my-zsh = {
       enable = true;
       theme = "robbyrussell";
-      plugins = [ "git" "python" "pip" ];
+      plugins = [ "git" "python" "node" ];
     };
   };
 }
 ```
 
-### 편집기 설정
+### 에디터 설정
 
 ```nix
+# 목적: 에디터 환경 설정
+# 핵심 개념: 개발 도구 통합
 {
   programs.vim = {
     enable = true;
 
     extraConfig = ''
-      " 기본 설정
       set number
       set tabstop=4
       set shiftwidth=4
       set expandtab
-      set autoindent
 
-      " Python 특화
-      autocmd FileType python setlocal tabstop=4 shiftwidth=4 expandtab
-
-      " 구문 강조
       syntax on
       filetype plugin indent on
 
-      " 검색
       set hlsearch
       set incsearch
-      set ignorecase
-      set smartcase
     '';
   };
 
@@ -298,29 +253,26 @@ home-manager switch --flake .#researcher
     enable = true;
     extensions = with pkgs.vscode-extensions; [
       ms-python.python
-      ms-python.flake8
-      ms-toolsai.jupyter
+      ms-vscode.vscode-typescript-next
+      esbenp.prettier-vscode
     ];
 
     userSettings = {
-      "python.defaultInterpreterPath" = "${pkgs.python311}/bin/python";
-      "python.formatting.provider" = "black";
       "editor.formatOnSave" = true;
-      "files.associations" = {
-        "*.fasta" = "plaintext";
-        "*.fa" = "plaintext";
-        "*.fastq" = "plaintext";
-      };
+      "python.defaultInterpreterPath" = "${pkgs.python3}/bin/python";
+      "editor.tabSize" = 2;
     };
   };
 }
 ```
 
-## D.5 프로젝트별 환경 구성
+## D.5 프로젝트별 환경
 
 ### direnv 통합
 
 ```nix
+# 목적: 프로젝트별 자동 환경 전환
+# 핵심 개념: 디렉토리 기반 환경
 {
   programs.direnv = {
     enable = true;
@@ -331,104 +283,77 @@ home-manager switch --flake .#researcher
 }
 ```
 
+프로젝트에서 사용:
+
 ```bash
-# 프로젝트 디렉토리에서
+# .envrc 파일 생성
 echo "use flake" > .envrc
 direnv allow
-
-# 자동으로 프로젝트 환경 활성화
 ```
 
-### 프로젝트 템플릿
+### 개발 템플릿
 
 ```nix
-# ~/research/protein-study/.envrc
-use flake
-
-# ~/research/protein-study/flake.nix
+# 목적: 일관된 프로젝트 구조 제공
+# 핵심 개념: 템플릿화, 자동화
 {
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
-
-  outputs = { nixpkgs, ... }:
-    let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-    in {
-      devShells.x86_64-linux.default = pkgs.mkShell {
-        buildInputs = with pkgs; [
-          python311
-          python311Packages.biopython
-          python311Packages.tensorflow
-          blast
-        ];
-
-        shellHook = ''
-          echo "🧬 단백질 연구 환경"
-          export PROJECT_ROOT=$(pwd)
-          export PYTHONPATH="$PROJECT_ROOT/src:$PYTHONPATH"
-        '';
-      };
-    };
-}
-```
-
-## D.6 실제 사용 시나리오
-
-### 연구자 환경 설정
-
-```nix
-# ~/.config/home-manager/home.nix
-{ config, pkgs, ... }:
-
-{
-  imports = [
-    ./programs.nix    # 프로그램 설정
-    ./development.nix # 개발 환경
-    ./research.nix    # 연구 도구
-  ];
-
-  home = {
-    username = "researcher";
-    homeDirectory = "/home/researcher";
-    stateVersion = "23.11";
-  };
-
-  # 연구 디렉토리 구조
   home.file = {
-    "research/.keep".text = "";
-    "research/data/.keep".text = "";
-    "research/scripts/.keep".text = "";
-    "research/results/.keep".text = "";
+    # 프로젝트 템플릿
+    "templates/python/.envrc".text = "use flake";
+    "templates/python/flake.nix".text = ''
+      {
+        inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
+        outputs = { nixpkgs, ... }:
+          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          in {
+            devShells.x86_64-linux.default = pkgs.mkShell {
+              buildInputs = with pkgs; [
+                python3
+                python3Packages.pytest
+              ];
+            };
+          };
+      }
+    '';
 
-    # 공통 스크립트
-    "research/scripts/setup_project.sh" = {
+    # 스크립트
+    "bin/new-python-project" = {
       text = ''
         #!/bin/bash
-        mkdir -p data results notebooks
-        echo "use flake" > .envrc
+        mkdir -p "$1"
+        cd "$1"
+        cp -r ~/templates/python/* .
         direnv allow
       '';
       executable = true;
     };
   };
-
-  programs.home-manager.enable = true;
 }
 ```
 
-### 시스템 간 동기화
+## D.6 환경 동기화
+
+### 설정 백업
 
 ```bash
-# 설정 백업
+# Git 저장소로 설정 백업
 cd ~/.config/home-manager
 git init
 git add .
-git commit -m "Initial home configuration"
-git remote add origin https://github.com/researcher/dotfiles.git
+git commit -m "초기 Home Manager 설정"
+git remote add origin https://github.com/user/dotfiles.git
 git push -u origin main
+```
 
-# 새 시스템에서 복원
-git clone https://github.com/researcher/dotfiles.git ~/.config/home-manager
+### 새 시스템에서 복원
+
+```bash
+# 설정 복제
+git clone https://github.com/user/dotfiles.git ~/.config/home-manager
 cd ~/.config/home-manager
-home-manager switch
+
+# 환경 적용
+home-manager switch --flake .
 ```
 
 ### 업데이트 관리
@@ -437,71 +362,76 @@ home-manager switch
 # 설정 업데이트
 home-manager switch
 
-# 패키지 업데이트
-nix-channel --update
-home-manager switch
-
 # Flake 업데이트
-cd ~/.config/home-manager
 nix flake update
 home-manager switch --flake .
 
-# 롤백
+# 세대 관리
 home-manager generations
 home-manager switch --switch-generation 42
 ```
 
-### 팀 환경 표준화
+## D.7 모듈화와 재사용
+
+### 공통 모듈
 
 ```nix
-# 연구실 공통 설정 모듈
-# ~/.config/home-manager/lab-common.nix
+# 목적: 재사용 가능한 설정 모듈
+# 파일: common.nix
 { pkgs, ... }:
 
 {
   home.packages = with pkgs; [
-    # 공통 도구
-    python311
-    python311Packages.biopython
-    python311Packages.pandas
-    git
+    git curl wget tree htop
   ];
 
   programs.git = {
     enable = true;
-    extraConfig = {
-      # 연구실 공통 설정
-      core.autocrlf = "input";
-      init.defaultBranch = "main";
-    };
+    extraConfig.init.defaultBranch = "main";
   };
 
-  # 공통 별칭
   home.shellAliases = {
-    lab-server = "ssh researcher@lab.edu";
-    backup = "rsync -av ~/research/ lab.edu:~/backup/";
+    ll = "ls -la";
+    ".." = "cd ..";
   };
 }
 ```
 
-## D.7 요약
+### 환경별 구성
 
-**Home Manager 활용 시점**:
+```nix
+# 목적: 환경별 특화 설정
+# 파일: work.nix
+{
+  imports = [ ./common.nix ];
 
-- 개인 개발 환경 관리
+  home.packages = with pkgs; [
+    docker-client kubectl
+    slack discord
+  ];
+
+  programs.git = {
+    userName = "Work Name";
+    userEmail = "work@company.com";
+  };
+}
+```
+
+## D.8 특징과 활용
+
+### 장점
+
+- 사용자 레벨 선언적 관리
+- 시스템 관리자 권한 불필요
 - dotfiles 버전 관리
 - 프로젝트별 환경 자동화
 
-**장점**:
-
-- 사용자 레벨 선언적 관리
-- 시스템 독립적
-- Git 친화적 설정
-
-**제한사항**:
+### 제한사항
 
 - 시스템 레벨 설정 불가
-- GUI 설정 제한적
-- 초기 학습 필요
+- GUI 프로그램 설정 제한적
+- 일부 프로그램 미지원
 
-**연구자에게 가장 실용적**: 개인 Python 환경, dotfiles, 프로젝트 자동화에 최적화 Appendix D: Introduction to Home-Manager
+---
+
+**요약**: Home Manager는 개인 개발 환경과 dotfiles를 체계적으로 관리하는 도구입니다. 사용자 레벨에서 재현 가능한 환경을 제공하여 개발 워크플로우를 표준화할 수 있습니다.
