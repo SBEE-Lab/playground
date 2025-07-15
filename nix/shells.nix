@@ -13,7 +13,6 @@
     just
     pre-commit
     bashInteractive
-    git-agecrypt
     coreutils
     direnv
 

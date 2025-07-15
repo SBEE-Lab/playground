@@ -36,6 +36,7 @@ in {
         settings.configuration = {
           MD013.line_length = 200;
           MD033.allowed_elements = ["br"];
+          MD024 = false;
         };
       };
 
