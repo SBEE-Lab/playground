@@ -35,7 +35,7 @@ docker run -it nixos/nix
 ### 1. 저장소 클론
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/sbee-lab/playground
 cd playground
 ```
 
