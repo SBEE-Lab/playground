@@ -1,0 +1,5 @@
+.DS_Store
+.pre-commit-config.y*ml
+.taskmaster
+.claude
+.mcp.json

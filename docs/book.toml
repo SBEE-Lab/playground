@@ -1,0 +1,5 @@
+[book]
+authors = ["mulatta"]
+language = "en"
+src = "src"
+title = "playground"
