@@ -13,13 +13,27 @@
 ### macOS/Linux에 Nix 설치
 
 ```bash
-sh <(curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix)
+sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install)
+```
+
+### Linux에 Nix 설치
+
+```bash
+sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
 ```
 
 ### Windows (WSL2)
 
+1. Windows CMD 에서 WSL 설치
+
 ```bash
-sh <(curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix)
+wsl --install
+```
+
+1. wsl 에서 Nix 설치
+
+```bash
+sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
 ```
 
 ### Docker 사용
