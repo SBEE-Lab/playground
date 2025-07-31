@@ -1,0 +1,73 @@
+# .github/workflows/release.yml
+name: Date-based Release
+
+on:
+  workflow_dispatch: # 수동 트리거
+  schedule:
+    - cron: "0 9 * * 1" # 매주 월요일 오전 9시 (선택사항)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install git-cliff
+        run: |
+          curl -sSL https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-x86_64-unknown-linux-gnu.tar.gz | tar -xz
+          sudo mv git-cliff /usr/local/bin/
+
+      - name: Check for changes
+        id: changes
+        run: |
+          # 마지막 태그 이후 변경사항 확인
+          if git cliff --unreleased --strip all | grep -q "^- "; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          # 날짜 기반 버전 생성
+          TODAY=$(date +%y.%m.%d)
+          VERSION="v${TODAY}"
+
+          # 같은 날 여러 릴리즈 처리
+          PATCH_NUM=0
+          while git tag -l | grep -q "^${VERSION}"; do
+            PATCH_NUM=$((PATCH_NUM + 1))
+            if [ $PATCH_NUM -eq 1 ]; then
+              VERSION="v${TODAY}.${PATCH_NUM}"
+            else
+              VERSION="v${TODAY}.${PATCH_NUM}"
+            fi
+          done
+
+          echo "Creating release: ${VERSION}"
+
+          # changelog 생성
+          git cliff --tag ${VERSION} > CHANGELOG.md
+
+          # 커밋 및 태그
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: release ${VERSION}"
+          git tag ${VERSION}
+          git push origin main
+          git push origin ${VERSION}
+
+      - name: Create GitHub Release
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
+          body_path: CHANGELOG.md
