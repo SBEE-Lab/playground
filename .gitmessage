@@ -1,0 +1,111 @@
+# <type>[optional scope]: <description>
+#
+# [optional body]
+#
+# [optional footer(s)]
+
+# ========================================
+# 커밋 예시:
+# ========================================
+# feat(part3): add genomics data visualization chapter
+#
+# 새로운 genomics 데이터 시각화 챕터를 추가했습니다.
+# - matplotlib을 이용한 기본 플롯
+# - seaborn을 이용한 통계 시각화
+# - plotly를 이용한 인터랙티브 차트
+#
+# Closes #87
+
+# ========================================
+# 커밋 타입 (Type):
+# ========================================
+# feat:     새로운 기능, 챕터, 실습 추가
+# fix:      버그 수정, 오타 수정, 코드 오류 수정
+# docs:     문서 개선, 설명 보완 (내용 변경)
+# style:    포맷팅, 스타일링 (내용 변경 없음)
+# refactor: 코드/구조 리팩토링
+# perf:     성능 개선, 빌드 최적화
+# test:     테스트 추가, 실습 검증
+# chore:    빌드, 의존성, 설정 변경
+# ci:       CI/CD 파이프라인 관련
+# revert:   이전 커밋 되돌리기
+
+# ========================================
+# 파트별 스코프 (Part Scope):
+# ========================================
+# part1:    기초 도구 및 환경 (Linux, Nix, Git, Security)
+# part2:    프로그래밍 및 데이터 과학 (Python, Data Science, ML)
+# part3:    생물정보학 도구 (Data Formats, Sequence Analysis, Omics, Synthetic Biology)
+# part4:    고급 워크플로우 (Research Workflows, HPC, CI/CD)
+
+# ========================================
+# 챕터별 스코프 (Chapter Scope):
+# ========================================
+# ch01              # Chapter01: Linux 기초
+# ch02              # Chapter02: Nix 패키지 관리
+# ch03              # Chapter03: Git 버전 관리
+# ch04              # Chapter04: 보안 기초
+# ch05              # Chapter05: Python 프로그래밍
+# ch06              # Chapter06: 데이터 사이언스
+# ch07              # Chapter07: 머신러닝
+# ch08              # Chapter08: 데이터 포맷
+# ch09              # Chapter09: 서열 분석
+# ch10              # Chapter10: 오믹스 분석
+# ch11              # Chapter11: 합성생물학 도구
+# ch12              # Chapter12: 진화 공학
+# ch13              # Chapter13: 연구 워크플로우
+# ch14              # Chapter14: 고성능 컴퓨팅
+# ch15              # Chapter15: 연구용 CI/CD
+
+# ========================================
+# 기능별 스코프 (Functional Scope):
+# ========================================
+# practice: 실습 자료 관련
+# docs:     문서 빌드/구조 관련
+# nix:      Nix 설정 및 패키지
+# build:    빌드 시스템
+# release:  릴리즈 관련
+
+# ========================================
+# 실제 사용 예시:
+# ========================================
+# 새로운 챕터 추가:
+# feat(part3): add genomics data visualization chapter
+
+# 실습 자료 추가:
+# feat(practice): add protein folding simulation exercises
+
+# 버그 수정:
+# fix(ch05-python): correct matplotlib import error in example
+
+# 문서 개선:
+# docs(part2): improve pandas tutorial explanations
+
+# 구조 개편:
+# refactor(docs): reorganize chapter numbering system
+
+# Nix 관련:
+# chore(nix): update python dependencies to latest versions
+
+# 실습 오류 수정:
+# fix(practice): fix broken symlinks in chapter02 exercises
+
+# 성능 개선:
+# perf(build): optimize mdbook compilation speed
+
+# Breaking Changes:
+# feat(structure)!: reorganize entire book structure
+#
+# BREAKING CHANGE: Chapter numbering has completely changed.
+# All existing bookmarks and references need to be updated.
+
+# ========================================
+# 작성 가이드:
+# ========================================
+# 1. 현재형 동사 사용 (fix not fixed)
+# 2. 첫 글자 소문자 (타입 제외)
+# 3. 마침표 사용하지 않음
+# 4. 50자 이내로 요약
+# 5. 본문은 72자에서 줄바꿈
+# 6. 이슈 번호 참조: Closes #123, Fixes #456
+# 7. Breaking change는 !와 BREAKING CHANGE: 사용
