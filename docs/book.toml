@@ -1,0 +1,25 @@
+[book]
+authors = ["mulatta"]
+description = "SBEE laboartory development playground"
+language = "ko"
+src = "src"
+title = "playground"
+
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/sbee-lab/playground"
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+
+[output.html.print]
+enable = true
+page-break = true
+
+[output.html.search]
+enable = true
+
+[preprocessor]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
