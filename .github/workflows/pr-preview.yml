@@ -1,0 +1,89 @@
+name: PR Preview
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  preview-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v24
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build PR preview
+        run: |
+          echo "🔍 Building PR preview..."
+          nix build .#build-docs
+          cp -r result/* ./pr-preview/
+
+      - name: Generate PR preview report
+        id: preview_report
+        run: |
+          echo "## 📖 PR Preview Report" > pr-report.md
+          echo "" >> pr-report.md
+          echo "### Changes in this PR:" >> pr-report.md
+
+          # 변경된 파일 목록
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(md|nix)$' | head -10 | while read file; do
+            echo "- 📝 \`$file\`" >> pr-report.md
+          done
+
+          echo "" >> pr-report.md
+          echo "### Changelog Preview:" >> pr-report.md
+          echo "\`\`\`" >> pr-report.md
+          nix run .#preview || echo "No unreleased changes" >> pr-report.md
+          echo "\`\`\`" >> pr-report.md
+
+          # 다중 줄 출력을 위한 처리
+          {
+            echo 'PREVIEW_REPORT<<EOF'
+            cat pr-report.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const report = `${{ steps.preview_report.outputs.PREVIEW_REPORT }}`;
+
+            // 기존 bot 댓글 찾기
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('📖 PR Preview Report')
+            );
+
+            if (botComment) {
+              // 기존 댓글 업데이트
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: report
+              });
+            } else {
+              // 새 댓글 생성
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: report
+              });
+            }

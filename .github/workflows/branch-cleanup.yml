@@ -1,0 +1,48 @@
+name: Branch Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+  schedule:
+    - cron: "0 2 * * 0" # 매주 일요일 오전 2시
+
+jobs:
+  cleanup-merged-branches:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Delete merged branch
+        run: |
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          if [[ "$BRANCH_NAME" != "main" && "$BRANCH_NAME" != "develop" ]]; then
+            echo "🗑️ Deleting merged branch: $BRANCH_NAME"
+            git push origin --delete "$BRANCH_NAME" || echo "Branch already deleted"
+          fi
+
+  cleanup-stale-branches:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find stale branches
+        run: |
+          echo "🔍 Finding branches older than 30 days..."
+          git for-each-ref --format='%(refname:short) %(committerdate)' refs/remotes/origin | \
+          while read branch date; do
+            if [[ "$branch" != "origin/main" && "$branch" != "origin/develop" ]]; then
+              if [[ $(date -d "$date" +%s) -lt $(date -d "30 days ago" +%s) ]]; then
+                BRANCH_NAME=${branch#origin/}
+                echo "⚠️  Stale branch found: $BRANCH_NAME (last commit: $date)"
+                # 실제 삭제는 수동으로 하도록 이슈 생성
+              fi
+            fi
+          done

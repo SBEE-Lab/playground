@@ -1,0 +1,119 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  # PR과 다른 브랜치에서는 빌드 테스트만
+  test-build:
+    if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v24
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test build
+        run: |
+          echo "🧪 Testing build process..."
+          nix build .#build-docs
+
+      - name: Validate content
+        run: nix flake check --all-systems
+
+      - name: Preview changelog
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "📖 Changelog preview for this PR:"
+          nix run .#preview || echo "No unreleased changes found"
+
+  # main 브랜치에 푸시될 때만 실제 빌드와 릴리즈
+  build-and-release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v24
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build documentation
+        run: |
+          echo "🏗️ Building documentation..."
+          nix build .#build-docs
+
+      - name: Check for release-worthy changes
+        id: check_changes
+        run: |
+          if nix run .#preview 2>/dev/null | grep -q "❌ No unreleased changes found"; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "🔍 No significant changes found, skipping release"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected, proceeding with release"
+          fi
+
+      - name: Configure Git
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🚀 Creating new release..."
+          nix run .#release
+
+          git push origin main
+          git push origin $RELEASE_TAG
+
+      - name: Extract changelog for GitHub release
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "📝 Extracting changelog for GitHub release..."
+          nix run nixpkgs#git-cliff -- --latest --strip header > RELEASE_NOTES.md
+
+      - name: Create GitHub Release
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          release_name: Release ${{ env.RELEASE_TAG }}
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+
+      - name: Setup Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages Artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: result
+
+      - name: Deploy to Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/deploy-pages@v4
