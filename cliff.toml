@@ -1,0 +1,64 @@
+[changelog]
+header = """
+# Changelog
+"""
+body = """
+{% if version %}\
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+    ## [unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | striptags | trim | upper_first }}
+    {% for commit in commits %}
+        - {% if commit.scope %}**{{commit.scope}}**: {% endif %}{{ commit.message | upper_first }} ([{{ commit.id | truncate(length=7, end="") }}]({{ remote.github.owner }}/{{ remote.github.repo }}/commit/{{ commit.id }}))
+    {% endfor %}
+{% endfor %}
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+tag_pattern = "(v)?[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}"
+topo_order = false
+sort_commits = "oldest"
+
+[bump]
+features_always_bump_minor = false
+breaking_always_bump_major = false
+
+[[git.commit_parsers]]
+message = "^feat"
+group = "🚀 신규 사항"
+
+[[git.commit_parsers]]
+message = "^fix"
+group = "🐛 버그 수정"
+
+[[git.commit_parsers]]
+message = "^docs"
+group = "📚 문서"
+
+[[git.commit_parsers]]
+message = "^refactor"
+group = "⚡ 리팩토링"
+
+[[git.commit_parsers]]
+message = "^perf"
+group = "🚀 성능 개선"
+
+[[git.commit_parsers]]
+message = "^style"
+group = "🎨 스타일"
+
+[[git.commit_parsers]]
+message = "^chore"
+group = "🔧 기타"
+skip = false
+
+[[git.commit_parsers]]
+message = "^ci"
+group = "🔧 기타"
+skip = false
