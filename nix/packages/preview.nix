@@ -6,7 +6,7 @@
   bat ? null,
 }:
 writeShellApplication {
-  name = "changelog-preview";
+  name = "preview";
 
   runtimeInputs =
     [
