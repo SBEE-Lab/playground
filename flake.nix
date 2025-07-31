@@ -20,6 +20,7 @@
     formatter = forEachSystem (pkgs: import ./nix/formatter.nix {inherit pkgs;});
     checks = forEachSystem (pkgs: import ./nix/checks.nix {inherit inputs pkgs;});
     packages = forEachSystem (pkgs: import ./nix/packages {inherit pkgs;});
+    apps = forEachSystem (pkgs: import ./nix/apps {inherit self pkgs;});
     overlays = import ./nix/overlays.nix {inherit inputs;};
   };
 
