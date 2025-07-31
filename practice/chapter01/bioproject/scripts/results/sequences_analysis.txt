@@ -1,0 +1,5 @@
+=== FASTA 분석: sequences.fasta ===
+서열 개수: 3
+최소 길이: 119bp
+최대 길이: 120bp
+평균 길이: 119bp

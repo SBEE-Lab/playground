@@ -1,0 +1,19 @@
+{
+  "projects": {
+    "ml_project": {
+      "python": "3.8",
+      "packages": ["tensorflow", "numpy", "pandas"],
+      "memory": "16GB"
+    },
+    "web_project": {
+      "python": "3.8",
+      "packages": ["flask", "numpy", "pandas"],
+      "memory": "8GB"
+    },
+    "data_project": {
+      "python": "3.9",
+      "packages": ["pandas", "scikit-learn"],
+      "memory": "32GB"
+    }
+  }
+}

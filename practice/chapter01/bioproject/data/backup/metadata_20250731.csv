@@ -1,0 +1,4 @@
+sample_id,organism,condition,replicate
+seq1,E.coli,control,1
+seq2,B.subtilis,treatment,1
+seq3,S.aureus,control,2

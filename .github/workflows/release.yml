@@ -1,73 +1,105 @@
-# .github/workflows/release.yml
-name: Date-based Release
+name: Date-based Release with Nix
 
 on:
-  workflow_dispatch: # 수동 트리거
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: "Force release even if no changes"
+        required: false
+        default: false
+        type: boolean
   schedule:
-    - cron: "0 9 * * 1" # 매주 월요일 오전 9시 (선택사항)
+    - cron: "0 9 * * 1"
 
 jobs:
-  release:
+  preview:
     runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install git-cliff
-        run: |
-          curl -sSL https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-x86_64-unknown-linux-gnu.tar.gz | tar -xz
-          sudo mv git-cliff /usr/local/bin/
+      - name: Install Nix
+        uses: cachix/install-nix-action@v24
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Nix Cache
+        uses: cachix/cachix-action@v12
+        with:
+          name: playground-docs
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          skipPush: true
 
       - name: Check for changes
-        id: changes
+        id: check
         run: |
-          # 마지막 태그 이후 변경사항 확인
-          if git cliff --unreleased --strip all | grep -q "^- "; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
+          # Nix로 체인지로그 미리보기 실행
+          nix run .#preview || PREVIEW_EXIT_CODE=$?
+
+          # 변경사항 확인
+          if nix run .#preview 2>/dev/null | grep -q "❌ No unreleased changes found"; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create release
-        if: steps.changes.outputs.has_changes == 'true'
+      - name: Show changelog preview
+        if: steps.check.outputs.has_changes == 'true'
+        run: nix run .#preview
+
+  release:
+    runs-on: ubuntu-latest
+    needs: preview
+    if: needs.preview.outputs.has_changes == 'true' || github.event.inputs.force_release == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v24
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Nix Cache
+        uses: cachix/cachix-action@v12
+        with:
+          name: playground-docs
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
+      - name: Configure Git
         run: |
-          # 날짜 기반 버전 생성
-          TODAY=$(date +%y.%m.%d)
-          VERSION="v${TODAY}"
-
-          # 같은 날 여러 릴리즈 처리
-          PATCH_NUM=0
-          while git tag -l | grep -q "^${VERSION}"; do
-            PATCH_NUM=$((PATCH_NUM + 1))
-            if [ $PATCH_NUM -eq 1 ]; then
-              VERSION="v${TODAY}.${PATCH_NUM}"
-            else
-              VERSION="v${TODAY}.${PATCH_NUM}"
-            fi
-          done
-
-          echo "Creating release: ${VERSION}"
-
-          # changelog 생성
-          git cliff --tag ${VERSION} > CHANGELOG.md
-
-          # 커밋 및 태그
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          git commit -m "chore: release ${VERSION}"
-          git tag ${VERSION}
+
+      - name: Create release
+        run: |
+          # release
+          nix run .#release
+
+          # push release
           git push origin main
-          git push origin ${VERSION}
+          git push origin $RELEASE_TAG
+
+      - name: Extract changelog for GitHub release
+        run: |
+          # extract changelog from latest release
+          nix run nixpkgs#git-cliff -- --latest --strip header > RELEASE_NOTES.md
 
       - name: Create GitHub Release
-        if: steps.changes.outputs.has_changes == 'true'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: Release ${{ env.VERSION }}
-          body_path: CHANGELOG.md
+          tag_name: ${{ env.RELEASE_TAG }}
+          release_name: Release ${{ env.RELEASE_TAG }}
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: false

@@ -59,6 +59,7 @@ in {
         mdbook-mermaid
         mdbook-admonish
         git-cliff
+        pandoc
       ]
       ++ commonDeps;
 

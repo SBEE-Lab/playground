@@ -1,0 +1,8 @@
+2024-01-15 09:00:00 [INFO] Analysis started
+2024-01-15 09:05:12 [INFO] Loading sequences: 150 files
+2024-01-15 09:15:30 [WARN] Low quality detected in sample_023
+2024-01-15 09:25:45 [ERROR] Failed to process sample_087
+2024-01-15 09:30:00 [INFO] Quality control completed
+2024-01-15 09:45:22 [INFO] BLAST search started
+2024-01-15 10:15:33 [WARN] Timeout in sample_045
+2024-01-15 10:30:00 [INFO] Analysis completed
