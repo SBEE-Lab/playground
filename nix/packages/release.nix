@@ -52,7 +52,7 @@ writeShellApplication {
     # commits and tag
     echo "💾 Committing and tagging..."
     git add CHANGELOG.md
-    git commit -m "chore: release $VERSION"
+    git commit -m "chore: release $VERSION" --no-verify
     git tag "$VERSION"
 
     echo "🎉 Release $VERSION completed!"
