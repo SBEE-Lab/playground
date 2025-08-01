@@ -182,10 +182,38 @@ find . -type f -exec chmod 644 {} \;    # 모든 파일을 644 권한으로 변�
 
 ## Practice Section: 연구 데이터 권한 관리
 
+이번 실습을 통해 생성되어야 할 최종 outputs 은 다음과 같습니다.
+
+```bash
+[drwxr-xr-x]  chapter01
+└── [drwxr-xr-x]  bioproject
+    ├── [lrwxr-xr-x]  current_data -> data/raw/sequences.fasta
+    ├── [lrwxr-xr-x]  current_metadata -> data/raw/metadata.csv
+    ├── [drwxr-x---]  data
+    │   ├── [drwxr-xr-x]  backup
+    │   │   ├── [-rw-------]  metadata.csv
+    │   │   └── [-rw-------]  sequences.fasta
+    │   ├── [drwxr-xr-x]  processed
+    │   │   └── [-rw-r--r--]  sequences_working.fasta
+    │   └── [drwx------]  raw
+    │       ├── [-rw-r--r--]  metadata.csv
+    │       └── [-rw-r--r--]  sequences.fasta
+    └── [drwxr-xr-x]  results
+        └── [-rw-r--r--]  report.txt
+
+6 directories, 8 files
+```
+
 ### 실습 1: 프로젝트 권한 구조 설정
 
 ```bash
+# 실습 환경 진입
+nix develop .#chapter01
+
+# 이전 섹션에서 생성한 ./bioproject 에서 이어서 작업합니다.
+# (./playground/practice/chapter01/bioproject)
 cd ./bioproject
+
 
 # 현재 권한 상태 확인
 ls -la
@@ -195,8 +223,7 @@ ls -la data/
 chmod 755 .                     # 프로젝트 루트: 일반적인 디렉토리 권한
 chmod 750 data/                 # 데이터: 그룹만 접근 가능
 chmod 700 data/raw/             # 원시 데이터: 소유자만 접근
-chmod 755 scripts/              # 스크립트: 모든 사용자 실행 가능
-chmod 755 results/ docs/        # 결과와 문서: 공유 가능
+chmod 755 results/              # 결과: 공유 가능
 
 # 권한 설정 확인
 ls -la
@@ -205,7 +232,7 @@ ls -la
 ### 실습 2: 파일별 보안 등급 적용
 
 ```bash
-cd ./bioproject/data/raw
+cd ./data/raw
 
 # 민감한 데이터 보호
 chmod 600 metadata.csv          # 메타데이터: 소유자만 읽기/쓰기
@@ -224,16 +251,11 @@ ls -la | awk '{print $1, $9}'
 ### 실습 3: 심볼릭 링크 활용
 
 ```bash
-cd ./bioproject
+cd ../..
 
 # 자주 사용하는 파일에 대한 바로가기 생성
 ln -s data/raw/sequences.fasta current_data
 ln -s data/raw/metadata.csv current_metadata
-
-# 최신 결과 링크 (분석 결과 업데이트 시 유용)
-mkdir -p results/$(date +%Y%m%d)
-echo "분석 결과 예시" > results/$(date +%Y%m%d)/analysis_v1.txt
-ln -s results/$(date +%Y%m%d)/analysis_v1.txt latest_results
 
 # 링크 확인
 ls -la | grep "^l"
@@ -243,17 +265,11 @@ readlink current_data
 ### 실습 4: 파일 검색 연습
 
 ```bash
-# 프로젝트 내 파일 검색
-
-# 1. 모든 데이터 파일 찾기
+# 모든 데이터 파일 찾기
 find . -name "*.fasta" -o -name "*.csv"
-
-# 2. 실행 가능 파일
-find . -type f -perm /u+x
-
-# 3. 읽기 전용 파일
-find . -type f -perm 444
 ```
+
+---
 
 ## 핵심 정리
 

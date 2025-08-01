@@ -470,10 +470,51 @@ log_error "BLAST 데이터베이스 연결 실패"
 
 ## Practice Section: 생물정보학 연구 자동화
 
+```bash
+# 실습 환경 진입
+nix develop .#chapter01
+```
+
+이번 실습을 통해 생성되어야 할 최종 outputs 은 다음과 같습니다.
+
+```bash
+[drwxr-xr-x]  .
+└── [drwxr-xr-x]  bioproject
+    ├── [-rw-r--r--]  analysis.log
+    ├── [lrwxr-xr-x]  current_data -> data/raw/sequences.fasta
+    ├── [lrwxr-xr-x]  current_metadata -> data/raw/metadata.csv
+    ├── [drwxr-x---]  data
+    │   ├── [drwxr-xr-x]  backup
+    │   │   ├── [-rw-------]  metadata.csv
+    │   │   └── [-rw-------]  sequences.fasta
+    │   ├── [drwxr-xr-x]  processed
+    │   │   └── [-rw-r--r--]  sequences_working.fasta
+    │   └── [drwx------]  raw
+    │       ├── [-rw-r--r--]  lengths.txt
+    │       ├── [-rw-r--r--]  metadata.csv
+    │       └── [-rw-r--r--]  sequences.fasta
+    ├── [-rw-r--r--]  mixed_ids.txt
+    ├── [drwxr-xr-x]  results
+    │   ├── [-rw-r--r--]  lengths.report
+    │   └── [-rw-r--r--]  report.txt
+    └── [drwxr-xr-x]  scripts
+        ├── [-rwxr-xr-x]  analyze_fasta.sh
+        ├── [-rwxr-xr-x]  batch_process.sh
+        ├── [-rwxr-xr-x]  conditional_process.sh
+        ├── [-rwxr-xr-x]  function_example.sh
+        ├── [drwxr-xr-x]  results
+        │   └── [-rw-r--r--]  sequences_analysis.txt
+        └── [-rwxr-xr-x]  simple_monitor.sh
+
+9 directories, 18 files
+```
+
 ### 실습 1: 기본 FASTA 분석 스크립트
 
 ```bash
-cd ./bioproject/scripts
+cd ./bioproject/
+
+mkdir scripts
 
 cat > analyze_fasta.sh << 'EOF'
 #!/bin/bash
@@ -510,6 +551,9 @@ EOF
 
 chmod +x analyze_fasta.sh
 ./analyze_fasta.sh ../data/raw/sequences.fasta
+
+# 실행 권한은 다음과 같이 삭제할 수 있음
+# chmod -x analyze_fasta.sh
 ```
 
 ### 실습 2: 다중 파일 처리
@@ -653,6 +697,8 @@ EOF
 chmod +x function_example.sh
 ./function_example.sh
 ```
+
+---
 
 ## 핵심 정리
 

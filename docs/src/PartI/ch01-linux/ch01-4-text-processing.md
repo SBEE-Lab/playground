@@ -194,30 +194,66 @@ sed -n '100,200p' large_file.txt               # 100-200번째 줄만 출력
 
 ## Practice Section: 생물정보학 데이터 처리
 
+```bash
+# 실습 환경 진입
+nix develop .#chapter01
+```
+
+이번 실습을 통해 생성되어야 할 최종 outputs 은 다음과 같습니다.
+
+```bash
+[drwxr-xr-x]  .
+└── [drwxr-xr-x]  bioproject
+    ├── [-rw-r--r--]  analysis.log
+    ├── [lrwxr-xr-x]  current_data -> data/raw/sequences.fasta
+    ├── [lrwxr-xr-x]  current_metadata -> data/raw/metadata.csv
+    ├── [drwxr-x---]  data
+    │   ├── [drwxr-xr-x]  backup
+    │   │   ├── [-rw-------]  metadata.csv
+    │   │   └── [-rw-------]  sequences.fasta
+    │   ├── [drwxr-xr-x]  processed
+    │   │   └── [-rw-r--r--]  sequences_working.fasta
+    │   └── [drwx------]  raw
+    │       ├── [-rw-r--r--]  lengths.txt
+    │       ├── [-rw-r--r--]  metadata.csv
+    │       └── [-rw-r--r--]  sequences.fasta
+    ├── [-rw-r--r--]  mixed_ids.txt
+    └── [drwxr-xr-x]  results
+        ├── [-rw-r--r--]  lengths.report
+        └── [-rw-r--r--]  report.txt
+
+7 directories, 12 files
+```
+
 ### 실습 1: FASTA 파일 기본 분석
 
 ```bash
+# ./playground/practice/chapter01/bioproject/data/raw
 cd ./bioproject/data/raw
 
 # FASTA 파일 기본 정보 추출
 echo "서열 개수: $(grep -c '^>' sequences.fasta)"
 echo "총 라인 수: $(wc -l < sequences.fasta)"
 
-# 서열 ID와 길이 분석
-awk '/^>/ {if(seq) print length(seq); header=$0; seq=""}
+# 서열 ID와 길이 분석 임시 파일 생성
+awk '/^>/ {if(seq) print header, length(seq); header=$0; seq=""}
      !/^>/ {seq=seq$0}
-     END {print length(seq)}' sequences.fasta > lengths.txt
+     END {print header, length(seq)}' sequences.fasta > lengths.txt
 
-echo "최단 서열: $(sort -n lengths.txt | head -1)bp"
-echo "최장 서열: $(sort -n lengths.txt | tail -1)bp"
-echo "평균 길이: $(awk '{sum+=$1} END {print int(sum/NR)}' lengths.txt)bp"
+echo "최단 서열: $(awk '{print $2, $1}' lengths.txt | sort -n | head -1 | awk '{print $2, $1}')bp" > ../../results/lengths.report
+echo "최장 서열: $(awk '{print $2, $1}' lengths.txt | sort -n | tail -1 | awk '{print $2, $1}')bp" >> ../../results/lengths.report
+echo "평균 길이: $(awk '{sum+=$2} END {print int(sum/NR)}' lengths.txt)bp" >> ../../results/lengths.report
 
-rm lengths.txt
+# 보고서 확인
+cd ../../results
+cat lengths.report
 ```
 
 ### 실습 2: CSV 데이터 처리
 
 ```bash
+cd ../data/raw/
+
 # 메타데이터 분석
 echo "총 샘플 수: $(tail -n +2 metadata.csv | wc -l)"
 
@@ -255,7 +291,7 @@ echo "총 로그 라인: $(wc -l < analysis.log)"
 echo "에러 발생: $(grep -c ERROR analysis.log)건"
 echo "경고 발생: $(grep -c WARN analysis.log)건"
 
-# 시간대별 활동
+# 시간대별 로그 개수
 echo -e "\n시간대별 로그:"
 awk '{print substr($2, 1, 5)}' analysis.log | sort | uniq -c
 
@@ -289,13 +325,12 @@ grep '^>' mixed_ids.txt | \
 
 # 서열 데이터 정리 (N 제거, 대문자 변환)
 echo -e "\nATCGNNATCG" | tr -d 'N' | tr '[:lower:]' '[:upper:]'
-
-rm mixed_ids.txt
 ```
 
 ### 실습 5: 복합 데이터 처리 파이프라인
 
 ```bash
+cd ./data/raw
 # 복잡한 데이터 처리 예제
 echo "=== 복합 데이터 처리 ==="
 
@@ -325,6 +360,8 @@ ls -la *.{fasta,csv} 2>/dev/null | \
         else printf "%-20s: %dB\n", $2, size
     }'
 ```
+
+---
 
 ## 핵심 정리
 

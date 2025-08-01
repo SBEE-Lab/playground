@@ -221,6 +221,13 @@ ps aux --sort=-%mem | head -10        # 메모리 사용률 상위 10개 프로�
 
 ## Practice Section: 생물정보학 분석 작업 관리
 
+```bash
+# 실습 환경 진입
+nix develop .#chapter01
+```
+
+이번 실습을 통해 생성되어야 할 최종 outputs 은 없습니다.
+
 ### 실습 1: 기본 프로세스 모니터링
 
 ```bash
@@ -239,7 +246,6 @@ ps aux --sort=-%cpu | head -6
 ### 실습 2: 백그라운드 작업 시뮬레이션
 
 ```bash
-cd ./chapter01/scripts
 # 백그라운드에서 실행
 python long_task.py 30 > task_output.log 2>&1 &
 task_pid=$!
@@ -249,6 +255,8 @@ echo $task_pid
 
 # 작업 상태 확인
 ps aux | grep long_task | grep -v grep
+
+rm task_output.log
 ```
 
 ### 실습 3: nohup을 이용한 안전한 실행
@@ -271,6 +279,8 @@ if kill -0 $nohup_pid 2>/dev/null; then
 else
     echo "작업 완료됨"
 fi
+
+rm nohup_output.log analysis.pid
 ```
 
 ### 실습 4: 프로세스 제어 연습

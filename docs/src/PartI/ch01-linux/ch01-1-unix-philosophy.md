@@ -163,8 +163,28 @@ info ls                # 상세한 정보 페이지
 # 실습 디렉토리로 진입 (playground/practice/chapter01)
 cd ./practice/chapter01
 
-# 개발 환경 shell 진입
-nix develop .#chapter1
+# 실습 환경 진입
+nix develop .#chapter01
+```
+
+이번 실습을 통해 생성되어야 할 최종 outputs 은 다음과 같습니다.
+
+```bash
+chapter01
+└── bioproject
+    ├── data
+    │   ├── backup
+    │   │   ├── metadata.csv
+    │   │   └── sequences.fasta
+    │   ├── processed
+    │   │   └── sequences_working.fasta
+    │   └── raw
+    │       ├── metadata.csv
+    │       └── sequences.fasta
+    └── results
+        └── report.txt
+
+6 directories, 6 files
 ```
 
 ### 실습 1: 프로젝트 구조 생성
@@ -174,7 +194,7 @@ nix develop .#chapter1
 pwd
 
 # 생물정보학 연구 프로젝트 디렉토리 생성
-mkdir -p bioproject/{data/{raw,processed,backup},scripts,results}
+mkdir -p bioproject/{data/{raw,processed,backup},results}
 
 # 현재 구조 확인
 cd ./bioproject
@@ -216,26 +236,26 @@ EOF
 
 # 잘 생성되었는지 확인
 ls -la
-cat sequences.fast
+cat sequences.fasta
 cat metadata.csv
 ```
 
-### 실습 3: 기본 파일 분석
+### 실습 3: 기본 파일 분석 보고서 작성
 
 ```bash
 # FASTA 파일 기본 분석
 # 1. 서열 개수 ('>' 의 개수와 동일함)
-grep -c '^>' sequences.fasta
+echo "The number of sequences: $(grep -c '^>' sequences.fasta)" > ../../result/report.txt
 
 # 2. 총 라인 수
-wc -l < sequences.fasta
+echo "The number of total lines: $(wc -l < sequences.fasta)" >> ../../result/report.txt
 
 # 3. 서열 이름 확인
 grep '^>' sequences.fasta
 
 # 메타데이터 분석
 # 1. 총 샘플 수
-tail -n +2 metadata.csv | wc -l
+echo "The number of total samples: $(tail -n +2 metadata.csv | wc -l)" >> ../../result/report.txt
 
 # 2. 유기체별 분포
 tail -n +2 metadata.csv | cut -d',' -f2 | sort | uniq -c
@@ -267,7 +287,7 @@ rm ../backup/metadata_$(date +%Y%m%d).csv
 # 파이프라인을 이용한 데이터 분석
 
 # 가장 긴 서열 라인 찾기
-grep -v '^>' sequences.fasta | awk '{print length, $0}' | sort -nr | head -1
+echo "The most long sequence: $(grep -v '^>' sequences.fasta | awk '{print length, $0}' | sort -nr | head -1)" >> ../../result/report.txt
 
 # 파일 크기별 정렬
 ls -la | grep -v '^d' | sort -k5 -nr
@@ -277,6 +297,8 @@ cd ../../..
 find ./bioproject -type f | wc -l | xargs echo "총 파일 수:"
 find ./bioproject -type d | wc -l | xargs echo "총 디렉토리 수:"
 ```
+
+---
 
 ## 핵심 정리
 
