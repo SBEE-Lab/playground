@@ -60,3 +60,22 @@ nix develop .#chapter1
 nix develop .#chapter2
 ...
 ```
+
+## 🤝 기여하기
+
+본 문서는 참여 구성원 모두가 함께 만들어가는 페이지입니다.
+오타를 발견하거나 개선 사항, 새로운 파트나 챕터를 제안하고 싶으시다면, 다음의 두 방법을 통해 본 문서에 기여하실 수 있습니다.
+
+### Issue
+
+GitHub Issue 를 통해 개선 사항을 관리하제에 요청할 수 있습니다.
+
+### Pull-Request
+
+GitHub Pull Request 를 통해 개선 사항을 직접 수정/편집하여 제안하실 수 있습니다.
+본 저장소를 `clone` 하신 뒤, 적절한 `branch` 를 생성하여 `commit` 을 작성하여 저장소로 `push` 하시면 됩니다.
+
+자세한 내용은 다음 guide 를 참고해주세요.
+
+- [branch 규정 알아보기](./docs/BRANCH_CONVENTION.md)
+- [commit 규정 알아보기](./docs/COMMIT_CONVENTION.md)
