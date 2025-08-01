@@ -16,7 +16,7 @@
     );
     forEachSystem = f: lib.genAttrs systems (system: f (pkgsFor.${system}));
   in {
-    devShells = forEachSystem (pkgs: import ./nix/shells {inherit pkgs outputs;});
+    devShells = forEachSystem (pkgs: import ./nix/shells {inherit pkgs outputs self;});
     formatter = forEachSystem (pkgs: import ./nix/formatter.nix {inherit pkgs;});
     checks = forEachSystem (pkgs: import ./nix/checks.nix {inherit inputs pkgs;});
     packages = forEachSystem (pkgs: import ./nix/packages {inherit pkgs;});

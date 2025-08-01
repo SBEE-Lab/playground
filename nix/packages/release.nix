@@ -8,7 +8,7 @@
   gnugrep,
 }:
 writeShellApplication {
-  name = "release-script";
+  name = "release";
 
   runtimeInputs = [
     git
