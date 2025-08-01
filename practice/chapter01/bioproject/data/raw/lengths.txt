@@ -1,0 +1,3 @@
+>seq1_Ecoli 119
+>seq2_Bsubtilis 120
+>seq3_Saureus 120

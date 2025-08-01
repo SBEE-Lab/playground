@@ -1,0 +1,5 @@
+>gi|123456|sp|P12345|GENE1_ECOLI
+>ref|NM_000001.1|
+>gb|ABC12345.1|gene_description
+>seq_001_sample_A
+>SEQ_002_SAMPLE_B

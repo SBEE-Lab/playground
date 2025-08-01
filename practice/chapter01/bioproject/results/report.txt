@@ -1,0 +1,4 @@
+The number of sequences: 3
+The number of total lines: 9
+The number of total samples: 3
+The most long sequence: 60 GTTGAAGAAGCGAACACCATGCCGGATAAAGTCGATATCGACAAACTGAAAGCGCTGCTG
