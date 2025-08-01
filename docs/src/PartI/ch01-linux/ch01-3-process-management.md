@@ -247,7 +247,7 @@ ps aux --sort=-%cpu | head -6
 
 ```bash
 # 백그라운드에서 실행
-python long_task.py 30 > task_output.log 2>&1 &
+long-task 30 > task_output.log 2>&1 &
 task_pid=$!
 
 # 작업 pid 확인
@@ -263,7 +263,7 @@ rm task_output.log
 
 ```bash
 # 연결이 끊어져도 계속 실행되는 작업
-nohup python3 long_task.py 45 > nohup_output.log 2>&1 &
+nohup long-task 45 > nohup_output.log 2>&1 &
 nohup_pid=$!
 
 # PID 저장
@@ -288,7 +288,7 @@ rm nohup_output.log analysis.pid
 ```bash
 # 테스트용 무한 루프 백그라운드 실행
 # 카운터가 무한히 실행되어 화면에 출력되지만 계속 진행하면 됩니다
-python infinite_task.py &
+infinite-task
 test_pid=$!
 echo "테스트 프로세스 PID: $test_pid"
 
@@ -313,7 +313,7 @@ fi
 # 모니터링 스크립트
 # 5회 모니터링 실행
 for i in {1..5}; do
-    ./monitor.sh
+    monitor
     sleep 3
 done
 ```
