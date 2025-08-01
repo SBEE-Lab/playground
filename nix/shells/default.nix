@@ -44,6 +44,8 @@
         }
         ${extraShellHook}
         echo "✅ Development environment ready!"
+        cd $REPO_ROOT/practice/${chapter};
+        echo "Current path: $(pwd)"
       '';
     };
 in {
@@ -75,5 +77,5 @@ in {
       echo "📚 Documentation tools ready"
     '';
   };
-  chapter1 = import ./chapter1 {inherit pkgs mkChapterShell;};
+  chapter01 = import ./chapter01 {inherit pkgs mkChapterShell;};
 }
