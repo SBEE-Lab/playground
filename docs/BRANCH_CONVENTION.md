@@ -10,17 +10,22 @@ main (🔒 protected)
 ├── feature/
 │   ├── part1-linux-advanced
 │   ├── part2-ml-deep-learning
-│   └── infrastructure-nix-ci
+│   └── part3-genomics-pipeline
 ├── content/
 │   ├── ch05-python-update
 │   └── typo-fixes-batch
 ├── practice/
 │   ├── chapter02-nix-exercises
 │   └── ml-project-templates
-├── hotfix/
-│   └── critical-security-update
-└── docs/
-    └── contribution-guide
+├── infra/
+│   ├── ci-workflow-improvements
+│   ├── nix-environment-update
+│   ├── changelog-enhancements
+│   └── build-system-upgrade
+├── docs/
+│   └── contribution-guide
+└── hotfix/
+    └── critical-security-update
 ```
 
 ## 🎯 브랜치별 용도
@@ -39,8 +44,9 @@ main (🔒 protected)
 | `feature/`  | 새로운 기능/챕터 | `develop` | `feature/part3-genomics-pipeline`  |
 | `content/`  | 기존 콘텐츠 개선 | `develop` | `content/ch05-python-update`       |
 | `practice/` | 실습 자료 관련   | `develop` | `practice/chapter02-nix-exercises` |
-| `hotfix/`   | 긴급 수정        | `main`    | `hotfix/critical-security-update`  |
+| `infra/`    | 인프라 관련      | `develop` | `infra/ci-workflow`                |
 | `docs/`     | 문서 개선        | `develop` | `docs/contribution-guide`          |
+| `hotfix/`   | 긴급 수정        | `main`    | `hotfix/critical-security-update`  |
 
 ## 🔄 워크플로우
 
@@ -95,6 +101,51 @@ git push origin hotfix/critical-security-update
 # - GitHub Pages 배포
 ```
 
+### 4. 인프라 관련 작업 플로우
+
+```bash
+# 1. CI/CD 워크플로우 개선
+git checkout develop
+git pull origin develop
+git checkout -b infra/improve-pr-preview
+
+# 2. 인프라 작업 수행
+# ... GitHub Actions, Nix 환경, 빌드 시스템 등 ...
+
+# 3. 커밋 (인프라 관련 스코프 사용)
+git add .
+git commit -m "feat(infra): enhance PR preview with changelog integration"
+
+# 4. 푸시 및 PR 생성
+git push origin infra/improve-pr-preview
+# GitHub에서 develop <- infra/improve-pr-preview PR 생성
+```
+
+## 🏗️ 인프라 브랜치 상세 가이드
+
+### infra/ 브랜치가 담당하는 영역
+
+| 영역            | 설명                              | 파일 예시                      |
+| --------------- | --------------------------------- | ------------------------------ |
+| **CI/CD**       | GitHub Actions, 자동화 파이프라인 | `.github/workflows/`           |
+| **빌드 시스템** | 문서 빌드, 배포 설정              | `nix/packages/build-docs.nix`  |
+| **개발 환경**   | Nix 환경, 의존성 관리             | `flake.nix`, `nix/shells/`     |
+| **도구 설정**   | Changelog, 린팅, 포맷팅           | `.cliff.toml`, `.editorconfig` |
+| **보안/시크릿** | SOPS, 암호화 설정                 | `.sops.yaml`                   |
+| **모니터링**    | 사이트 상태, 성능 체크            | 모니터링 스크립트              |
+
+### 인프라 관련 커밋 스코프
+
+```bash
+# 인프라 관련 커밋 예시
+feat(infra): add automated changelog generation
+fix(ci): resolve build cache issues in GitHub Actions
+chore(nix): update development dependencies
+feat(tools): implement pre-commit hooks for markdown
+fix(build): resolve mdBook compilation errors
+feat(deploy): add blue-green deployment strategy
+```
+
 ## 🔧 로컬 개발 설정
 
 ### Git 설정
@@ -134,12 +185,21 @@ changelog-preview
 
 ### 새 기능/콘텐츠 추가 시
 
-- [ ] 적절한 브랜치명 사용 (`feature/`, `content/` 등)
+- [ ] 적절한 브랜치명 사용 (`feature/`, `content/`, `infra/` 등)
 - [ ] 커밋 메시지가 컨벤션 준수
 - [ ] 새로운 파일이 적절한 위치에 배치
 - [ ] 실습 파일이 있다면 `practice` 디렉토리에 정리
 - [ ] 빌드 테스트 통과
 - [ ] 충돌(conflict) 해결 완료
+
+### 인프라 변경 시 추가 체크리스트
+
+- [ ] CI/CD 변경 시 기존 워크플로우와 호환성 확인
+- [ ] Nix 환경 변경 시 `nix develop` 테스트
+- [ ] 새로운 의존성 추가 시 라이선스 확인
+- [ ] 보안 관련 변경 시 시크릿 노출 여부 확인
+- [ ] 빌드 시스템 변경 시 로컬/CI 양쪽에서 테스트
+  > > > > > > > d29a018 (feat(docs, ci): add contribution guide on docs/)
 
 ### 병합 전 확인사항
 
